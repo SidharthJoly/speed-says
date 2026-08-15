@@ -260,6 +260,27 @@ body {
 
 .bait-btn:hover { border-color: var(--red); }
 
+/* speed says */
+.speedsays-instruction {
+  font-family: 'Bungee', sans-serif;
+  font-size: clamp(1.3rem, 6vw, 1.8rem);
+  color: var(--white);
+  text-align: center;
+}
+
+.speedsays-btn {
+  font-family: 'Bungee', sans-serif;
+  font-size: 1.3rem;
+  padding: 26px 46px;
+  border-radius: 16px;
+  border: none;
+  background: var(--red);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255,45,45,0.5);
+  user-select: none;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-6px); }
@@ -400,7 +421,7 @@ body {
 .challenge-area.shake { animation: shake-area 0.35s ease; }
 
 /* touch responsiveness */
-.rage-btn, .bait-btn, .reaction-box, .btn {
+.rage-btn, .bait-btn, .reaction-box, .speedsays-btn, .btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

@@ -1,3 +1,9 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
 (() => {
   const HIGHSCORE_KEY = 'speedSays_highScore';
   const BEST_STREAK_KEY = 'speedSays_bestStreakEver';
@@ -49,10 +55,13 @@
 
   const COMBO_CALLOUTS = ['ON FIRE!', 'UNSTOPPABLE!', 'LOCKED IN!', 'DEMON MODE!', 'NO CAP!'];
 
-  const ROUND_ICONS = { type: '🔤', rageclick: '🖱️', reaction: '⚡', bait: '🎣' };
-  const ROUND_LABELS = { type: 'TYPE IT FAST', rageclick: 'RAGE CLICK', reaction: 'REACTION', bait: 'BAIT & SWITCH' };
+  const SPEED_SAYS_VERBS = ['CLICK', 'SMASH', 'TAP IT', 'GO', 'MASH IT', 'HIT IT'];
+  const SPEED_SAYS_BAIT = ['CLICK NOW', 'QUICK, CLICK!', "DON'T WAIT — CLICK", 'EVERYONE CLICKS', 'JUST CLICK IT', 'GO GO CLICK'];
 
-  const ROUND_TYPES = ['type', 'rageclick', 'reaction', 'bait'];
+  const ROUND_ICONS = { type: '🔤', rageclick: '🖱️', reaction: '⚡', bait: '🎣', speedsays: '🗣️' };
+  const ROUND_LABELS = { type: 'TYPE IT FAST', rageclick: 'RAGE CLICK', reaction: 'REACTION', bait: 'BAIT & SWITCH', speedsays: 'SPEED SAYS' };
+
+  const ROUND_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays'];
 
   let sfxOn = localStorage.getItem(SFX_KEY) !== '0';
   let audioCtx = null;
@@ -138,6 +147,7 @@
       lastType: null,
       resolved: false,
       cleanup: null,
+      onTimeout: null,
       rafId: null,
     };
   }
@@ -206,6 +216,7 @@
   }
 
   function showRoundIntro(type, callback) {
+    state.onTimeout = null;
     el.challengeArea.innerHTML = `<div class="intro-icon">${ROUND_ICONS[type]}</div>`;
     el.challengeLabel.textContent = ROUND_LABELS[type];
     el.challengeLabel.classList.remove('intro');
@@ -230,7 +241,8 @@
         el.timerBar.style.background = 'var(--yellow)';
       }
       if (fraction <= 0) {
-        resolveRound(false, 'timeout');
+        if (state.onTimeout) state.onTimeout();
+        else resolveRound(false, 'timeout');
         return;
       }
       state.rafId = requestAnimationFrame(tick);
@@ -364,6 +376,7 @@
     else if (type === 'rageclick') renderRageClick();
     else if (type === 'reaction') renderReaction();
     else if (type === 'bait') renderBait();
+    else if (type === 'speedsays') renderSpeedSays();
   }
 
   function renderTypeFast() {
@@ -492,6 +505,33 @@
     el.challengeArea.appendChild(grid);
 
     state.cleanup = () => cleanups.forEach((fn) => fn());
+  }
+
+  function renderSpeedSays() {
+    const isLegit = Math.random() < 0.5;
+    const text = isLegit ? `SPEED SAYS: ${pick(SPEED_SAYS_VERBS)}` : pick(SPEED_SAYS_BAIT);
+
+    const instruction = document.createElement('div');
+    instruction.className = 'speedsays-instruction';
+    instruction.textContent = text;
+
+    const btn = document.createElement('button');
+    btn.className = 'speedsays-btn';
+    btn.textContent = 'DO IT';
+
+    const offTap = onTap(btn, () => {
+      if (isLegit) resolveRound(true);
+      else resolveRound(false, 'wrong');
+    });
+
+    el.challengeArea.appendChild(instruction);
+    el.challengeArea.appendChild(btn);
+
+    state.cleanup = offTap;
+    state.onTimeout = () => {
+      if (isLegit) resolveRound(false, 'timeout');
+      else resolveRound(true);
+    };
   }
 
   function initStartScreen() {
