@@ -26,6 +26,11 @@
     <p class="tagline">type fast. click faster. don't get baited.</p>
     <div class="highscore">HIGH SCORE: <span id="highscore-value">0</span> · BEST STREAK: <span id="beststreak-value">0</span></div>
     <div id="history-row" class="history-row hidden"></div>
+    <div class="difficulty-row" id="difficulty-row" role="group" aria-label="Difficulty">
+      <button class="diff-btn" data-diff="chill">CHILL</button>
+      <button class="diff-btn" data-diff="normal">NORMAL</button>
+      <button class="diff-btn" data-diff="insane">INSANE</button>
+    </div>
     <button id="btn-start" class="btn btn-primary">LOCK IN</button>
     <div class="rules">
       <p>🔤 <b>TYPE IT</b> — tap the on-screen keys (or your keyboard) to spell it before time's up</p>
@@ -33,16 +38,21 @@
       <p>⚡ <b>REACTION</b> — wait for green, then click. click early = fail</p>
       <p>🎣 <b>BAIT & SWITCH</b> — click the real word, not the decoys</p>
       <p>🗣️ <b>SPEED SAYS</b> — only press DO IT when it says "SPEED SAYS"</p>
-      <p class="rules-timer">rounds start at 5s and ramp down to 1.5s. 3 lives. good luck.</p>
+      <p class="rules-timer">timer ramps down every round — pick your difficulty below. 3 lives. good luck.</p>
     </div>
   </section>
 
   <!-- GAME SCREEN -->
   <section id="screen-game" class="screen">
     <div class="hud">
-      <div class="hud-item">ROUND <span id="hud-round">1</span></div>
+      <div class="hud-item hud-round-item">ROUND <span id="hud-round">1</span></div>
       <div class="hud-item">SCORE <span id="hud-score">0</span></div>
       <div class="hud-item lives" id="hud-lives">❤️❤️❤️</div>
+    </div>
+
+    <div id="practice-banner" class="practice-banner hidden">
+      <span>PRACTICE <span id="practice-progress">1/5</span> — no lives lost</span>
+      <button id="btn-skip-practice" class="skip-practice-btn">SKIP</button>
     </div>
 
     <div class="timer-track">
@@ -67,6 +77,10 @@
     <div class="stats-row">
       <div>BEST STREAK<br><span id="over-best-streak">0</span></div>
       <div>ROUNDS CLEARED<br><span id="over-rounds-cleared">0</span></div>
+    </div>
+    <div class="share-row">
+      <button id="btn-share" class="btn btn-secondary">SHARE SCORE</button>
+      <span id="share-status" class="share-status"></span>
     </div>
     <button id="btn-restart" class="btn btn-primary">RUN IT BACK</button>
   </section>

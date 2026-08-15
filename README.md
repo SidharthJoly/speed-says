@@ -20,6 +20,8 @@ Five round types, shuffled at random, timer shrinking every round:
 
 Three lives, scoring rewards speed and streaks (up to a 2x multiplier at a 10-round streak), and every 5-streak triggers a combo callout. High score, best streak, and your last 5 runs are saved locally so you can chase your own record.
 
+Three difficulties (Chill / Normal / Insane) change the starting timer and how fast it ramps down. First time playing, a short no-stakes practice pass runs through all five round types before the real timer starts — skippable any time.
+
 ## Tech
 
 Zero dependencies, zero build step — plain HTML, CSS, and JavaScript, playable straight off disk or any static host.
@@ -28,7 +30,9 @@ Zero dependencies, zero build step — plain HTML, CSS, and JavaScript, playable
 - Sound effects synthesized at runtime with the Web Audio API (no audio files)
 - Pointer events (not `click`) for low-latency mobile taps, plus haptic feedback via the Vibration API
 - A custom on-screen QWERTY for Type It Fast instead of the native keyboard, so mobile isn't at the mercy of keyboard-popup delay or focus-permission quirks
-- Game state, high scores, streaks, and run history persisted with `localStorage`
+- Every round is playable via keyboard alone (Tab + Enter/Space), and all animations respect `prefers-reduced-motion`
+- Game state, high scores, streaks, difficulty, and run history persisted with `localStorage`
+- Score sharing via the Web Share API, with a clipboard-copy fallback
 - Installable PWA: a manifest + service worker cache the app shell so it works fully offline after the first load
 
 ## Run it locally

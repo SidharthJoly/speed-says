@@ -9,6 +9,8 @@ if ('serviceWorker' in navigator) {
   const BEST_STREAK_KEY = 'speedSays_bestStreakEver';
   const HISTORY_KEY = 'speedSays_history';
   const SFX_KEY = 'speedSays_sfxOn';
+  const DIFFICULTY_KEY = 'speedSays_difficulty';
+  const HAS_PLAYED_KEY = 'speedSays_hasPlayed';
 
   const el = {
     btnSfx: document.getElementById('btn-sfx'),
@@ -20,9 +22,13 @@ if ('serviceWorker' in navigator) {
     highscoreValue: document.getElementById('highscore-value'),
     beststreakValue: document.getElementById('beststreak-value'),
     historyRow: document.getElementById('history-row'),
+    diffButtons: Array.from(document.querySelectorAll('.diff-btn')),
     hudRound: document.getElementById('hud-round'),
     hudScore: document.getElementById('hud-score'),
     hudLives: document.getElementById('hud-lives'),
+    practiceBanner: document.getElementById('practice-banner'),
+    practiceProgress: document.getElementById('practice-progress'),
+    btnSkipPractice: document.getElementById('btn-skip-practice'),
     timerBar: document.getElementById('timer-bar'),
     challengeLabel: document.getElementById('challenge-label'),
     challengeArea: document.getElementById('challenge-area'),
@@ -32,6 +38,8 @@ if ('serviceWorker' in navigator) {
     newHigh: document.getElementById('new-high'),
     overBestStreak: document.getElementById('over-best-streak'),
     overRoundsCleared: document.getElementById('over-rounds-cleared'),
+    btnShare: document.getElementById('btn-share'),
+    shareStatus: document.getElementById('share-status'),
   };
 
   const TYPE_PHRASES = [
@@ -68,6 +76,25 @@ if ('serviceWorker' in navigator) {
   const ROUND_LABELS = { type: 'TYPE IT FAST', rageclick: 'RAGE CLICK', reaction: 'REACTION', bait: 'BAIT & SWITCH', speedsays: 'SPEED SAYS' };
 
   const ROUND_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays'];
+  const PRACTICE_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays'];
+
+  const DIFFICULTIES = {
+    chill: { start: 7, floor: 2.5, step: 0.5 },
+    normal: { start: 5, floor: 1.5, step: 0.5 },
+    insane: { start: 3.5, floor: 1, step: 0.4 },
+  };
+
+  let difficulty = DIFFICULTIES[localStorage.getItem(DIFFICULTY_KEY)] ? localStorage.getItem(DIFFICULTY_KEY) : 'normal';
+
+  function setDifficulty(diff) {
+    difficulty = diff;
+    localStorage.setItem(DIFFICULTY_KEY, diff);
+    el.diffButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.diff === diff));
+  }
+
+  el.diffButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
+  });
 
   let sfxOn = localStorage.getItem(SFX_KEY) !== '0';
   let audioCtx = null;
@@ -134,13 +161,25 @@ if ('serviceWorker' in navigator) {
   });
   updateSfxButton();
 
+  // pointerdown gives pointer/touch users near-zero latency. Native <button>
+  // keyboard activation (Enter/Space) only ever fires 'click' though, never
+  // 'pointerdown' — so it's also handled here, gated on event.detail === 0
+  // (the standard tell for a keyboard-triggered click) to avoid double-firing
+  // for mouse/touch users who already triggered the pointerdown handler.
   function onTap(element, handler) {
     const onPointerDown = (e) => {
       e.preventDefault();
       handler(e);
     };
+    const onClick = (e) => {
+      if (e.detail === 0) handler(e);
+    };
     element.addEventListener('pointerdown', onPointerDown);
-    return () => element.removeEventListener('pointerdown', onPointerDown);
+    element.addEventListener('click', onClick);
+    return () => {
+      element.removeEventListener('pointerdown', onPointerDown);
+      element.removeEventListener('click', onClick);
+    };
   }
 
   let state;
@@ -158,11 +197,14 @@ if ('serviceWorker' in navigator) {
       cleanup: null,
       onTimeout: null,
       rafId: null,
+      practiceMode: false,
+      practiceIndex: 0,
     };
   }
 
   function getRoundTime(round) {
-    return Math.max(1.5, 5 - (round - 1) * 0.5);
+    const d = DIFFICULTIES[difficulty];
+    return Math.max(d.floor, d.start - (round - 1) * d.step);
   }
 
   function getRageTarget(round) {
@@ -210,8 +252,55 @@ if ('serviceWorker' in navigator) {
     el.feedback.className = 'feedback';
     showScreen(el.screenGame);
     sfx.start();
+    if (!localStorage.getItem(HAS_PLAYED_KEY)) {
+      beginPractice();
+    } else {
+      nextRound();
+    }
+  }
+
+  function beginPractice() {
+    state.practiceMode = true;
+    state.practiceIndex = 0;
+    el.screenGame.classList.add('practice-active');
+    el.practiceBanner.classList.remove('hidden');
+    startPracticeRound();
+  }
+
+  function startPracticeRound() {
+    const type = PRACTICE_TYPES[state.practiceIndex];
+    el.practiceProgress.textContent = `${state.practiceIndex + 1}/5`;
+    showRoundIntro(type, () => {
+      state.resolved = false;
+      renderChallenge(type);
+      startTimer(6);
+    });
+  }
+
+  function advancePractice() {
+    state.practiceIndex += 1;
+    if (state.practiceIndex >= PRACTICE_TYPES.length) endPractice();
+    else startPracticeRound();
+  }
+
+  function endPractice() {
+    localStorage.setItem(HAS_PLAYED_KEY, '1');
+    el.screenGame.classList.remove('practice-active');
+    el.practiceBanner.classList.add('hidden');
+    resetState();
+    updateHud();
     nextRound();
   }
+
+  el.btnSkipPractice.addEventListener('click', () => {
+    if (!state.practiceMode) return;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    if (state.cleanup) {
+      state.cleanup();
+      state.cleanup = null;
+    }
+    endPractice();
+  });
 
   function nextRound() {
     state.round += 1;
@@ -274,6 +363,18 @@ if ('serviceWorker' in navigator) {
     if (state.cleanup) {
       state.cleanup();
       state.cleanup = null;
+    }
+
+    if (state.practiceMode) {
+      el.feedback.textContent = success ? 'NICE' : "THAT'S OK — KEEP GOING";
+      el.feedback.className = success ? 'feedback good' : 'feedback bad';
+      el.challengeArea.classList.remove('flash-bad', 'flash-good', 'shake');
+      void el.challengeArea.offsetWidth;
+      el.challengeArea.classList.add(success ? 'flash-good' : 'flash-bad');
+      if (success) sfx.success();
+      else sfx.fail();
+      setTimeout(advancePractice, 700);
+      return;
     }
 
     if (success) {
@@ -612,12 +713,37 @@ if ('serviceWorker' in navigator) {
     el.highscoreValue.textContent = highScore;
     el.beststreakValue.textContent = bestStreakEver;
     renderHistory();
+    setDifficulty(difficulty);
   }
 
   el.btnStart.addEventListener('click', startGame);
   el.btnRestart.addEventListener('click', () => {
     initStartScreen();
     startGame();
+  });
+
+  el.btnShare.addEventListener('click', async () => {
+    const text = `I scored ${state.score} on Speed Says ⚡ (best streak ${state.bestStreak}). Beat me:`;
+    const url = location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Speed Says', text, url });
+      } catch {
+        // user cancelled the share sheet — nothing to do
+      }
+      return;
+    }
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        el.shareStatus.textContent = 'Copied!';
+        setTimeout(() => {
+          el.shareStatus.textContent = '';
+        }, 1600);
+      } catch {
+        el.shareStatus.textContent = '';
+      }
+    }
   });
 
   initStartScreen();
