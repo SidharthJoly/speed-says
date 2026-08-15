@@ -1,4 +1,4 @@
-const CACHE_NAME = 'speed-says-v8';
+const CACHE_NAME = 'speed-says-v9';
 const APP_SHELL = [
   './',
   './index.html',
