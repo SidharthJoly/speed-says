@@ -176,34 +176,69 @@ body {
   letter-spacing: 2px;
 }
 
-.type-input {
-  width: 90%;
-  max-width: 320px;
+.typed-display {
+  min-width: 90%;
+  min-height: 1.4em;
   font-family: 'Archivo Black', sans-serif;
   font-size: 1.2rem;
+  letter-spacing: 2px;
   text-align: center;
-  padding: 12px;
+  padding: 10px;
   border-radius: 10px;
   border: 2px solid var(--red);
   background: #0d0d0d;
-  color: var(--white);
-  outline: none;
+  color: var(--green);
 }
 
-.type-input.wrong { border-color: var(--red); animation: shake 0.2s; }
+.typed-display.shake { animation: shake 0.2s; border-color: var(--red); }
 
-.type-input::placeholder {
+.typed-display .cursor {
   color: var(--grey);
-  letter-spacing: 1px;
+  animation: cursor-blink 1s step-end infinite;
 }
 
-.type-input.waiting {
-  animation: input-pulse 1s ease-in-out infinite;
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-@keyframes input-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(255,45,45,0); border-color: var(--red); }
-  50% { box-shadow: 0 0 16px rgba(255,45,45,0.6); border-color: var(--yellow); }
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.key {
+  flex: 1;
+  max-width: 34px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: var(--white);
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.key:active { background: var(--red); border-color: var(--red); }
+
+.key.space {
+  flex: 5;
+  max-width: none;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
 }
 
 /* rage click */
@@ -435,7 +470,7 @@ body {
 .challenge-area.shake { animation: shake-area 0.35s ease; }
 
 /* touch responsiveness */
-.rage-btn, .bait-btn, .reaction-box, .speedsays-btn, .btn {
+.rage-btn, .bait-btn, .reaction-box, .speedsays-btn, .key, .btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

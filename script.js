@@ -35,9 +35,15 @@ if ('serviceWorker' in navigator) {
   };
 
   const TYPE_PHRASES = [
-    'SYBAU', 'LOCK IN', 'SIUUUU', 'MOGGED', "IT'S THE WATER", 'GYATT',
+    'SYBAU', 'LOCK IN', 'SIUUUU', 'MOGGED', 'ITS THE WATER', 'GYATT',
     'NO CAP', 'RAAAHH', 'GOATED', 'SHEEESH', 'GOOFY AHH', 'BROSKI', 'RIZZLER',
     'ZESTY', 'DEMON TIME', 'W RIZZ', 'L TAKE', 'MEWING', 'CHOPPED', 'AURA FARM',
+  ];
+
+  const KEYBOARD_ROWS = [
+    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
   ];
 
   const BAIT_SETS = [
@@ -100,6 +106,9 @@ if ('serviceWorker' in navigator) {
     },
     tick() {
       playTone(1200, 0.03, { type: 'square', gain: 0.04 });
+    },
+    wrongKey() {
+      playTone(220, 0.06, { type: 'square', gain: 0.08 });
     },
     milestone() {
       [523, 659, 784, 1046].forEach((f, i) => playTone(f, 0.15, { type: 'triangle', gain: 0.2, delay: i * 0.07 }));
@@ -210,8 +219,8 @@ if ('serviceWorker' in navigator) {
     const type = pickRoundType();
     showRoundIntro(type, () => {
       state.resolved = false;
-      const duration = getRoundTime(state.round);
-      renderChallenge(type, () => startTimer(duration));
+      renderChallenge(type);
+      startTimer(getRoundTime(state.round));
     });
   }
 
@@ -367,67 +376,106 @@ if ('serviceWorker' in navigator) {
     showScreen(el.screenOver);
   }
 
-  function renderChallenge(type, start) {
+  function renderChallenge(type) {
     el.challengeArea.innerHTML = '';
     el.feedback.textContent = '';
     el.feedback.className = 'feedback';
 
-    if (type === 'type') {
-      renderTypeFast(start);
-    } else {
-      if (type === 'rageclick') renderRageClick();
-      else if (type === 'reaction') renderReaction();
-      else if (type === 'bait') renderBait();
-      else if (type === 'speedsays') renderSpeedSays();
-      start();
-    }
+    if (type === 'type') renderTypeFast();
+    else if (type === 'rageclick') renderRageClick();
+    else if (type === 'reaction') renderReaction();
+    else if (type === 'bait') renderBait();
+    else if (type === 'speedsays') renderSpeedSays();
   }
 
-  function renderTypeFast(start) {
+  // On-screen QWERTY so mobile never depends on the native keyboard (its
+  // popup animation and focus-permission quirks made short rounds
+  // unwinnable). Physical typing still works on desktop as a faster
+  // alternative. A tap only counts if it's the correct next letter — wrong
+  // taps are rejected with feedback rather than appended, so there's never
+  // anything to backspace under time pressure.
+  function renderTypeFast() {
     const phrase = pick(TYPE_PHRASES);
+    let typed = '';
 
     const phraseEl = document.createElement('div');
     phraseEl.className = 'type-phrase';
     phraseEl.textContent = phrase;
 
-    const input = document.createElement('input');
-    input.className = 'type-input waiting';
-    input.type = 'text';
-    input.autocomplete = 'off';
-    input.autocapitalize = 'characters';
-    input.enterKeyHint = 'done';
-    input.spellcheck = false;
-    input.placeholder = 'TAP TO TYPE';
+    const typedEl = document.createElement('div');
+    typedEl.className = 'typed-display';
 
-    // Mobile browsers ignore focus() unless it comes from a user gesture, so the
-    // round timer must not start until the player actually taps in and the
-    // keyboard opens — otherwise short rounds are unwinnable on a phone.
-    let started = false;
-    function begin() {
-      if (started) return;
-      started = true;
-      input.classList.remove('waiting');
-      input.placeholder = '';
-      start();
+    const keyboard = document.createElement('div');
+    keyboard.className = 'keyboard';
+
+    function renderTyped() {
+      typedEl.innerHTML = `${typed}<span class="cursor">|</span>`;
+    }
+    renderTyped();
+
+    function flashWrong() {
+      typedEl.classList.remove('shake');
+      void typedEl.offsetWidth;
+      typedEl.classList.add('shake');
+      sfx.wrongKey();
     }
 
-    function onInput() {
-      begin();
-      const val = input.value.trim().toUpperCase();
-      if (val === phrase) {
-        resolveRound(true);
+    function tryChar(ch) {
+      if (ch === phrase[typed.length]) {
+        typed += ch;
+        sfx.tick();
+        renderTyped();
+        if (typed === phrase) resolveRound(true);
+      } else {
+        flashWrong();
       }
     }
-    input.addEventListener('input', onInput);
-    input.addEventListener('focus', begin);
+
+    const offTaps = [];
+    KEYBOARD_ROWS.forEach((row) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'keyboard-row';
+      row.forEach((letter) => {
+        const key = document.createElement('button');
+        key.className = 'key';
+        key.textContent = letter;
+        offTaps.push(onTap(key, () => tryChar(letter)));
+        rowEl.appendChild(key);
+      });
+      keyboard.appendChild(rowEl);
+    });
+
+    if (phrase.includes(' ')) {
+      const spaceRow = document.createElement('div');
+      spaceRow.className = 'keyboard-row';
+      const spaceKey = document.createElement('button');
+      spaceKey.className = 'key space';
+      spaceKey.textContent = 'SPACE';
+      offTaps.push(onTap(spaceKey, () => tryChar(' ')));
+      spaceRow.appendChild(spaceKey);
+      keyboard.appendChild(spaceRow);
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Backspace' || e.key === 'Tab') {
+        e.preventDefault();
+        return;
+      }
+      const ch = e.key === ' ' ? ' ' : e.key.length === 1 ? e.key.toUpperCase() : null;
+      if (ch) {
+        e.preventDefault();
+        tryChar(ch);
+      }
+    }
+    window.addEventListener('keydown', onKeydown);
 
     el.challengeArea.appendChild(phraseEl);
-    el.challengeArea.appendChild(input);
-    setTimeout(() => input.focus(), 30);
+    el.challengeArea.appendChild(typedEl);
+    el.challengeArea.appendChild(keyboard);
 
     state.cleanup = () => {
-      input.removeEventListener('input', onInput);
-      input.removeEventListener('focus', begin);
+      offTaps.forEach((fn) => fn());
+      window.removeEventListener('keydown', onKeydown);
     };
   }
 

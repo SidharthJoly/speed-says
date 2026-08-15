@@ -12,7 +12,7 @@ Five round types, shuffled at random, timer shrinking every round:
 
 | Round | What you do |
 |---|---|
-| 🔤 **Type It Fast** | Type the phrase on screen before time runs out |
+| 🔤 **Type It Fast** | Spell the phrase on a custom on-screen keyboard (or your physical one) before time runs out |
 | 🖱️ **Rage Click** | Mash a button a set number of times before the clock hits zero |
 | ⚡ **Reaction** | Wait for the signal to turn green, then click — click early and you're out |
 | 🎣 **Bait & Switch** | Click the exact word among near-identical lookalikes |
@@ -27,6 +27,7 @@ Zero dependencies, zero build step — plain HTML, CSS, and JavaScript, playable
 - Round timing and animation via `requestAnimationFrame`
 - Sound effects synthesized at runtime with the Web Audio API (no audio files)
 - Pointer events (not `click`) for low-latency mobile taps, plus haptic feedback via the Vibration API
+- A custom on-screen QWERTY for Type It Fast instead of the native keyboard, so mobile isn't at the mercy of keyboard-popup delay or focus-permission quirks
 - Game state, high scores, streaks, and run history persisted with `localStorage`
 - Installable PWA: a manifest + service worker cache the app shell so it works fully offline after the first load
 
