@@ -13,10 +13,10 @@ Six round types, shuffled at random, timer shrinking every round:
 | Round | What you do |
 |---|---|
 | 🔤 **Type It Fast** | Spell the phrase on a custom on-screen keyboard (or your physical one) before time runs out |
-| 🖱️ **Rage Click** | Mash a button a set number of times before the clock hits zero |
-| ⚡ **Reaction** | Wait for the signal to turn green, then click — click early and you're out |
+| 🖱️ **Rage Click** | Mash a button (or spacebar) a set number of times before the clock hits zero |
+| ⚡ **Reaction** | Wait for the signal to turn green, then click or hit spacebar — early and you're out |
 | 🎣 **Bait & Switch** | Click the exact word among near-identical lookalikes |
-| 🗣️ **Speed Says** | Only press the button when the prompt starts with "SPEED SAYS" — a classic Simon Says trap |
+| 🗣️ **Speed Says** | Only press the button (or spacebar) when the prompt starts with "SPEED SAYS" — a classic Simon Says trap |
 | 💬 **Chat Spam** | Words scroll across the screen like stream chat — tap only the target word, ignore the rest, don't let it scroll past |
 
 Three lives, scoring rewards speed and streaks (up to a 2x multiplier at a 10-round streak), and every 5-streak triggers a combo callout. High score, best streak, and your last 5 runs are saved locally so you can chase your own record.

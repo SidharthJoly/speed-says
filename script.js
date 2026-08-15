@@ -197,6 +197,24 @@ if ('serviceWorker' in navigator) {
     };
   }
 
+  // Same as onTap, but the spacebar also fires the handler regardless of
+  // focus — mashing the physical spacebar reads as more fun/comfortable
+  // than repeatedly clicking for rounds that are just "hit the one target."
+  function onTapOrSpace(element, handler) {
+    const offTap = onTap(element, handler);
+    const onKeydown = (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        handler(e);
+      }
+    };
+    window.addEventListener('keydown', onKeydown);
+    return () => {
+      offTap();
+      window.removeEventListener('keydown', onKeydown);
+    };
+  }
+
   let state;
 
   function resetState() {
@@ -371,7 +389,7 @@ if ('serviceWorker' in navigator) {
     setTimeout(() => banner.remove(), 700);
   }
 
-  function resolveRound(success, reason) {
+  function resolveRound(success, reason, extra) {
     if (state.resolved) return;
     state.resolved = true;
     if (state.rafId) cancelAnimationFrame(state.rafId);
@@ -403,7 +421,8 @@ if ('serviceWorker' in navigator) {
       const points = Math.round((basePoints + timeBonus) * multiplier);
       state.score += points;
       const fire = state.streak >= 3 ? ' ' + '🔥'.repeat(Math.min(state.streak - 2, 5)) : '';
-      el.feedback.textContent = `+${points} · streak ${state.streak}${fire}`;
+      const extraText = extra ? ` · ${extra}` : '';
+      el.feedback.textContent = `+${points} · streak ${state.streak}${fire}${extraText}`;
       el.feedback.className = 'feedback good';
       el.challengeArea.classList.remove('flash-bad', 'shake');
       void el.challengeArea.offsetWidth;
@@ -611,7 +630,7 @@ if ('serviceWorker' in navigator) {
     btn.className = 'rage-btn';
     btn.textContent = 'MASH';
 
-    const offTap = onTap(btn, () => {
+    const offTap = onTapOrSpace(btn, () => {
       count += 1;
       countEl.innerHTML = `<span>${count}</span> / ${target}`;
       const jitter = () => `translate(${Math.random() * 16 - 8}px, ${Math.random() * 16 - 8}px)`;
@@ -649,14 +668,13 @@ if ('serviceWorker' in navigator) {
       box.textContent = 'CLICK!';
     }, delay);
 
-    const offTap = onTap(box, () => {
+    const offTap = onTapOrSpace(box, () => {
       if (phase === 'wait') {
         resolveRound(false, 'early');
         return;
       }
       const reactionMs = Math.round(performance.now() - goTime);
-      el.feedback.textContent = `${reactionMs}ms`;
-      resolveRound(true);
+      resolveRound(true, null, `${reactionMs}ms`);
     });
 
     el.challengeArea.appendChild(box);
@@ -711,7 +729,7 @@ if ('serviceWorker' in navigator) {
     btn.className = 'speedsays-btn';
     btn.textContent = 'DO IT';
 
-    const offTap = onTap(btn, () => {
+    const offTap = onTapOrSpace(btn, () => {
       if (isLegit) resolveRound(true);
       else resolveRound(false, 'wrong');
     });
@@ -795,6 +813,14 @@ if ('serviceWorker' in navigator) {
     let spawnTimeoutId = null;
     let stopped = false;
 
+    // Scroll speed and spawn rate both scale off the round's own timer, so a
+    // bubble reliably finishes crossing the screen well inside the time
+    // available — otherwise short rounds could time out before a target
+    // even finished scrolling into view. Shorter rounds also get faster
+    // (harder to read) bubbles, which doubles as the round's difficulty curve.
+    const transitMs = Math.max(700, Math.min(2400, duration * 1000 * 0.55));
+    const spawnInterval = Math.max(300, transitMs * 0.4);
+
     function removeEntry(entry) {
       entry.offTap();
       entry.bubble.removeEventListener('animationend', entry.onEnd);
@@ -811,7 +837,7 @@ if ('serviceWorker' in navigator) {
       bubble.className = 'chat-bubble';
       bubble.textContent = word;
       bubble.style.top = `${Math.floor(Math.random() * 3) * 40}px`;
-      bubble.style.animationDuration = `${1900 + Math.random() * 500}ms`;
+      bubble.style.animationDuration = `${transitMs * (0.85 + Math.random() * 0.3)}ms`;
 
       let resolvedBubble = false;
 
@@ -838,7 +864,6 @@ if ('serviceWorker' in navigator) {
       active.add(entry);
       lanes.appendChild(bubble);
 
-      const spawnInterval = Math.max(350, (duration * 1000) / 5);
       spawnTimeoutId = setTimeout(spawnMessage, spawnInterval * (0.7 + Math.random() * 0.6));
     }
     spawnMessage();
