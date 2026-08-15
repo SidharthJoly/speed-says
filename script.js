@@ -227,6 +227,9 @@ if ('serviceWorker' in navigator) {
       bestStreak: 0,
       roundsCleared: 0,
       lastType: null,
+      currentType: null,
+      typeBag: [],
+      typeStats: {},
       resolved: false,
       cleanup: null,
       onTimeout: null,
@@ -245,9 +248,49 @@ if ('serviceWorker' in navigator) {
     return Math.min(26, 8 + Math.floor(round * 1.5));
   }
 
+  // Every round type is guaranteed to appear exactly once per shuffled
+  // "bag" of 6 (Tetris's randomizer works the same way) — no type can go
+  // missing for a stretch or show up three times in a handful of rounds,
+  // which pure per-round randomness allows even with a no-immediate-repeat
+  // rule. On the player's last life, the type they've struggled with most
+  // this run gets pushed to the end of the new bag instead of removed — it
+  // still shows up, just not right when a single mistake would end the run.
+  function getWeakestType() {
+    let weakest = null;
+    let weakestRate = Infinity;
+    for (const t of ROUND_TYPES) {
+      const s = state.typeStats[t];
+      if (!s || s.attempts < 2) continue;
+      const rate = s.successes / s.attempts;
+      if (rate < weakestRate) {
+        weakestRate = rate;
+        weakest = t;
+      }
+    }
+    return weakestRate < 0.5 ? weakest : null;
+  }
+
+  function refillBag() {
+    let bag = shuffle(ROUND_TYPES.slice());
+    if (state.lives === 1) {
+      const weakType = getWeakestType();
+      if (weakType) {
+        bag = bag.filter((t) => t !== weakType);
+        bag.push(weakType);
+      }
+    }
+    if (state.lastType && bag[0] === state.lastType) {
+      const idx = bag.findIndex((t) => t !== state.lastType);
+      if (idx > 0) [bag[0], bag[idx]] = [bag[idx], bag[0]];
+    }
+    return bag;
+  }
+
   function pickRoundType() {
-    const options = ROUND_TYPES.filter((t) => t !== state.lastType);
-    const type = options[Math.floor(Math.random() * options.length)];
+    if (!state.typeBag.length) {
+      state.typeBag = refillBag();
+    }
+    const type = state.typeBag.shift();
     state.lastType = type;
     return type;
   }
@@ -303,6 +346,7 @@ if ('serviceWorker' in navigator) {
 
   function startPracticeRound() {
     const type = PRACTICE_TYPES[state.practiceIndex];
+    state.currentType = type;
     el.practiceProgress.textContent = `${state.practiceIndex + 1}/${PRACTICE_TYPES.length}`;
     showRoundIntro(type, () => {
       state.resolved = false;
@@ -340,6 +384,7 @@ if ('serviceWorker' in navigator) {
     state.round += 1;
     updateHud();
     const type = pickRoundType();
+    state.currentType = type;
     showRoundIntro(type, () => {
       state.resolved = false;
       renderChallenge(type);
@@ -424,6 +469,12 @@ if ('serviceWorker' in navigator) {
       setTimeout(advancePractice, 700);
       return;
     }
+
+    if (!state.typeStats[state.currentType]) {
+      state.typeStats[state.currentType] = { attempts: 0, successes: 0 };
+    }
+    state.typeStats[state.currentType].attempts += 1;
+    if (success) state.typeStats[state.currentType].successes += 1;
 
     if (success) {
       const remainingFraction = parseFloat(el.timerBar.style.width) / 100 || 0;

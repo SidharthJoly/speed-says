@@ -23,6 +23,8 @@ Three lives, scoring rewards speed and streaks (up to a 2x multiplier at a 10-ro
 
 Three difficulties (Chill / Normal / Insane) change the starting timer and how fast it ramps down. First time playing, a short no-stakes practice pass runs through all six round types before the real timer starts — skippable any time.
 
+Round types are drawn from a shuffled "bag" of all six (the same technique Tetris uses for piece order) instead of pure per-round randomness, so every 6 rounds you see each type exactly once — no type going missing for a stretch, none repeating three times in a handful of rounds. On your last life, whichever round type you've struggled with most that run gets pushed to the end of the next bag instead of removed — you'll still face it, just not right when one mistake would end the run.
+
 ## Tech
 
 Zero dependencies, zero build step — plain HTML, CSS, and JavaScript, playable straight off disk or any static host.
