@@ -298,3 +298,109 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* sfx toggle */
+.sfx-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #2a2a2a;
+  background: var(--bg-panel);
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 10;
+  touch-action: manipulation;
+}
+
+/* stats + history */
+.stats-row {
+  display: flex;
+  gap: 24px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: var(--grey);
+  text-align: center;
+}
+
+.stats-row span {
+  font-family: 'Bungee', sans-serif;
+  color: var(--white);
+  font-size: 1.1rem;
+}
+
+.history-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  font-size: 0.78rem;
+  color: var(--grey);
+}
+
+.history-row .chip {
+  background: var(--bg-panel);
+  border: 1px solid #262626;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+/* round intro */
+.challenge-label.intro {
+  animation: intro-pulse 0.3s ease;
+}
+
+@keyframes intro-pulse {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.intro-icon {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+
+/* combo callout */
+.combo-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', sans-serif;
+  font-size: 1.6rem;
+  color: var(--yellow);
+  text-shadow: 0 0 20px rgba(255,213,45,0.6);
+  background: rgba(10,10,10,0.55);
+  border-radius: 16px;
+  pointer-events: none;
+  animation: combo-pop 0.7s ease forwards;
+}
+
+@keyframes combo-pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  20% { opacity: 1; transform: scale(1.05); }
+  35% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* screen shake on fail */
+@keyframes shake-area {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.challenge-area.shake { animation: shake-area 0.35s ease; }
+
+/* touch responsiveness */
+.rage-btn, .bait-btn, .reaction-box, .btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

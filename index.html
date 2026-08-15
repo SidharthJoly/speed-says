@@ -11,13 +11,16 @@
 </head>
 <body>
 
+<button id="btn-sfx" class="sfx-toggle" aria-label="Toggle sound">🔊</button>
+
 <div id="app">
 
   <!-- START SCREEN -->
   <section id="screen-start" class="screen active">
     <h1 class="logo">⚡ SPEED SAYS ⚡</h1>
     <p class="tagline">type fast. click faster. don't get baited.</p>
-    <div class="highscore">HIGH SCORE: <span id="highscore-value">0</span></div>
+    <div class="highscore">HIGH SCORE: <span id="highscore-value">0</span> · BEST STREAK: <span id="beststreak-value">0</span></div>
+    <div id="history-row" class="history-row hidden"></div>
     <button id="btn-start" class="btn btn-primary">LOCK IN</button>
     <div class="rules">
       <p>🔤 <b>TYPE IT</b> — type the phrase before time's up</p>
@@ -55,6 +58,10 @@
     <p id="over-reason" class="over-reason"></p>
     <div class="final-score">SCORE: <span id="final-score">0</span></div>
     <div id="new-high" class="new-high hidden">🔥 NEW HIGH SCORE 🔥</div>
+    <div class="stats-row">
+      <div>BEST STREAK<br><span id="over-best-streak">0</span></div>
+      <div>ROUNDS CLEARED<br><span id="over-rounds-cleared">0</span></div>
+    </div>
     <button id="btn-restart" class="btn btn-primary">RUN IT BACK</button>
   </section>
 
