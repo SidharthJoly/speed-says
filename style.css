@@ -362,6 +362,64 @@ body {
   75% { transform: translateX(6px); }
 }
 
+/* chat spam */
+.chatspam-instruction {
+  font-family: 'Bungee', sans-serif;
+  font-size: 1.05rem;
+  color: var(--white);
+  text-align: center;
+}
+
+.chatspam-instruction b { color: var(--yellow); }
+.chatspam-instruction .chatspam-count { color: var(--green); }
+
+.chatspam-lanes {
+  position: relative;
+  width: 100%;
+  height: 132px;
+  overflow: hidden;
+}
+
+.chat-bubble {
+  position: absolute;
+  right: -160px;
+  top: 0;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 16px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: var(--white);
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  animation-name: chat-scroll;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes chat-scroll {
+  from { right: -160px; }
+  to { right: 100%; }
+}
+
+.chatspam-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.chat-bubble-static {
+  position: static;
+  animation: none;
+}
+
+.chat-bubble-static:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 @keyframes flash-bad {
   0% { background: rgba(255,45,45,0.35); }
   100% { background: var(--bg-panel); }
@@ -496,7 +554,7 @@ body {
 .challenge-area.shake { animation: shake-area 0.35s ease; }
 
 /* touch responsiveness */
-.rage-btn, .bait-btn, .reaction-box, .speedsays-btn, .key, .btn {
+.rage-btn, .bait-btn, .reaction-box, .speedsays-btn, .key, .chat-bubble, .btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

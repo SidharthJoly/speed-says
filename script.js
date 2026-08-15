@@ -73,11 +73,13 @@ if ('serviceWorker' in navigator) {
   const SPEED_SAYS_VERBS = ['CLICK', 'SMASH', 'TAP IT', 'GO', 'MASH IT', 'HIT IT'];
   const SPEED_SAYS_BAIT = ['CLICK NOW', 'QUICK, CLICK!', "DON'T WAIT — CLICK", 'EVERYONE CLICKS', 'JUST CLICK IT', 'GO GO CLICK'];
 
-  const ROUND_ICONS = { type: '🔤', rageclick: '🖱️', reaction: '⚡', bait: '🎣', speedsays: '🗣️' };
-  const ROUND_LABELS = { type: 'TYPE IT FAST', rageclick: 'RAGE CLICK', reaction: 'REACTION', bait: 'BAIT & SWITCH', speedsays: 'SPEED SAYS' };
+  const CHAT_WORDS = ['RIZZ', 'GYATT', 'SYBAU', 'MOGGED', 'GOATED', 'SIUUU', 'NO CAP', 'RAAAHH', 'ZESTY', 'CHOPPED', 'SHEEESH', 'BROSKI'];
 
-  const ROUND_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays'];
-  const PRACTICE_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays'];
+  const ROUND_ICONS = { type: '🔤', rageclick: '🖱️', reaction: '⚡', bait: '🎣', speedsays: '🗣️', chatspam: '💬' };
+  const ROUND_LABELS = { type: 'TYPE IT FAST', rageclick: 'RAGE CLICK', reaction: 'REACTION', bait: 'BAIT & SWITCH', speedsays: 'SPEED SAYS', chatspam: 'CHAT SPAM' };
+
+  const ROUND_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays', 'chatspam'];
+  const PRACTICE_TYPES = ['type', 'rageclick', 'reaction', 'bait', 'speedsays', 'chatspam'];
 
   const DIFFICULTIES = {
     chill: { start: 7, floor: 2.5, step: 0.5 },
@@ -419,6 +421,7 @@ if ('serviceWorker' in navigator) {
         timeout: 'TOO SLOW',
         wrong: 'GOT BAITED',
         early: 'JUMPED THE GUN',
+        missed: 'MISSED IT',
       };
       el.feedback.textContent = messages[reason] || 'FAIL';
       el.feedback.className = 'feedback bad';
@@ -444,6 +447,7 @@ if ('serviceWorker' in navigator) {
       timeout: 'Ran out of time.',
       wrong: 'Clicked the wrong one.',
       early: 'Clicked before the signal.',
+      missed: 'Let the target scroll past.',
     };
     return map[reason] || '';
   }
@@ -500,6 +504,7 @@ if ('serviceWorker' in navigator) {
     else if (type === 'reaction') renderReaction();
     else if (type === 'bait') renderBait();
     else if (type === 'speedsays') renderSpeedSays();
+    else if (type === 'chatspam') renderChatSpam();
   }
 
   // On-screen QWERTY so mobile never depends on the native keyboard (its
@@ -718,6 +723,130 @@ if ('serviceWorker' in navigator) {
     state.onTimeout = () => {
       if (isLegit) resolveRound(false, 'timeout');
       else resolveRound(true);
+    };
+  }
+
+  function chatSpamHitsNeeded(duration) {
+    if (duration >= 3.5) return 3;
+    if (duration >= 2) return 2;
+    return 1;
+  }
+
+  // Stream-chat-style scroll: words fly across the screen and you tap only
+  // the target, ignoring decoys and letting them scroll off harmlessly.
+  // Tapping a decoy, or letting the target itself scroll off untapped, fails
+  // the round. Under prefers-reduced-motion, falls back to a static grid
+  // (same rules, no motion) so it stays winnable without relying on motion.
+  function renderChatSpam() {
+    const target = pick(CHAT_WORDS);
+    const decoyPool = CHAT_WORDS.filter((w) => w !== target);
+    const duration = getRoundTime(state.round);
+    const hitsNeeded = chatSpamHitsNeeded(duration);
+    let hits = 0;
+
+    const instruction = document.createElement('div');
+    instruction.className = 'chatspam-instruction';
+    instruction.innerHTML = `Tap <b>${target}</b> in chat — ignore the rest (<span class="chatspam-count">0</span>/${hitsNeeded})`;
+    el.challengeArea.appendChild(instruction);
+
+    function bumpHits() {
+      hits += 1;
+      instruction.querySelector('.chatspam-count').textContent = hits;
+      sfx.tick();
+      return hits >= hitsNeeded;
+    }
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reducedMotion) {
+      const grid = document.createElement('div');
+      grid.className = 'chatspam-grid';
+      const words = shuffle([
+        ...Array(hitsNeeded).fill(target),
+        ...shuffle(decoyPool).slice(0, 5),
+      ]);
+      const cleanups = [];
+      words.forEach((word) => {
+        const btn = document.createElement('button');
+        btn.className = 'chat-bubble chat-bubble-static';
+        btn.textContent = word;
+        cleanups.push(
+          onTap(btn, () => {
+            if (word === target) {
+              if (bumpHits()) resolveRound(true);
+              else btn.disabled = true;
+            } else {
+              resolveRound(false, 'wrong');
+            }
+          })
+        );
+        grid.appendChild(btn);
+      });
+      el.challengeArea.appendChild(grid);
+      state.cleanup = () => cleanups.forEach((fn) => fn());
+      return;
+    }
+
+    const lanes = document.createElement('div');
+    lanes.className = 'chatspam-lanes';
+    el.challengeArea.appendChild(lanes);
+
+    const active = new Set();
+    let spawnTimeoutId = null;
+    let stopped = false;
+
+    function removeEntry(entry) {
+      entry.offTap();
+      entry.bubble.removeEventListener('animationend', entry.onEnd);
+      entry.bubble.remove();
+      active.delete(entry);
+    }
+
+    function spawnMessage() {
+      if (stopped || state.resolved) return;
+
+      const isTarget = Math.random() < 0.45;
+      const word = isTarget ? target : pick(decoyPool);
+      const bubble = document.createElement('button');
+      bubble.className = 'chat-bubble';
+      bubble.textContent = word;
+      bubble.style.top = `${Math.floor(Math.random() * 3) * 40}px`;
+      bubble.style.animationDuration = `${1900 + Math.random() * 500}ms`;
+
+      let resolvedBubble = false;
+
+      const onEnd = () => {
+        if (resolvedBubble) return;
+        resolvedBubble = true;
+        if (isTarget) resolveRound(false, 'missed');
+        else removeEntry(entry);
+      };
+      bubble.addEventListener('animationend', onEnd);
+
+      const offTap = onTap(bubble, () => {
+        if (resolvedBubble) return;
+        resolvedBubble = true;
+        if (isTarget) {
+          if (bumpHits()) resolveRound(true);
+          else removeEntry(entry);
+        } else {
+          resolveRound(false, 'wrong');
+        }
+      });
+
+      const entry = { bubble, offTap, onEnd };
+      active.add(entry);
+      lanes.appendChild(bubble);
+
+      const spawnInterval = Math.max(350, (duration * 1000) / 5);
+      spawnTimeoutId = setTimeout(spawnMessage, spawnInterval * (0.7 + Math.random() * 0.6));
+    }
+    spawnMessage();
+
+    state.cleanup = () => {
+      stopped = true;
+      clearTimeout(spawnTimeoutId);
+      active.forEach(removeEntry);
     };
   }
 
