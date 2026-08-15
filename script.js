@@ -29,6 +29,7 @@ if ('serviceWorker' in navigator) {
     practiceBanner: document.getElementById('practice-banner'),
     practiceProgress: document.getElementById('practice-progress'),
     btnSkipPractice: document.getElementById('btn-skip-practice'),
+    timerTrack: document.getElementById('timer-track'),
     timerBar: document.getElementById('timer-bar'),
     challengeLabel: document.getElementById('challenge-label'),
     challengeArea: document.getElementById('challenge-area'),
@@ -302,11 +303,11 @@ if ('serviceWorker' in navigator) {
 
   function startPracticeRound() {
     const type = PRACTICE_TYPES[state.practiceIndex];
-    el.practiceProgress.textContent = `${state.practiceIndex + 1}/5`;
+    el.practiceProgress.textContent = `${state.practiceIndex + 1}/${PRACTICE_TYPES.length}`;
     showRoundIntro(type, () => {
       state.resolved = false;
       renderChallenge(type);
-      startTimer(6);
+      startRoundTimer(type, 6);
     });
   }
 
@@ -342,8 +343,22 @@ if ('serviceWorker' in navigator) {
     showRoundIntro(type, () => {
       state.resolved = false;
       renderChallenge(type);
-      startTimer(getRoundTime(state.round));
+      startRoundTimer(type, getRoundTime(state.round));
     });
+  }
+
+  // Chat Spam has no ticking deadline of its own — it only ends when the
+  // target is hit enough times, a decoy is tapped, or the target scrolls
+  // fully off-screen untapped. Scroll speed (not a timer) is its difficulty
+  // knob, so the shared round timer is skipped entirely for it.
+  function startRoundTimer(type, duration) {
+    if (type === 'chatspam') {
+      el.timerTrack.classList.add('hidden');
+      state.rafId = null;
+      return;
+    }
+    el.timerTrack.classList.remove('hidden');
+    startTimer(duration);
   }
 
   function showRoundIntro(type, callback) {

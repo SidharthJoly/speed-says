@@ -17,7 +17,7 @@ Six round types, shuffled at random, timer shrinking every round:
 | ⚡ **Reaction** | Wait for the signal to turn green, then click or hit spacebar — early and you're out |
 | 🎣 **Bait & Switch** | Click the exact word among near-identical lookalikes |
 | 🗣️ **Speed Says** | Only press the button (or spacebar) when the prompt starts with "SPEED SAYS" — a classic Simon Says trap |
-| 💬 **Chat Spam** | Words scroll across the screen like stream chat — tap only the target word, ignore the rest, don't let it scroll past |
+| 💬 **Chat Spam** | Words scroll across the screen like stream chat — tap only the target word, ignore the rest. No countdown here: it only ends when you tap a decoy or let the target scroll fully off-screen, and scroll speed itself is the difficulty |
 
 Three lives, scoring rewards speed and streaks (up to a 2x multiplier at a 10-round streak), and every 5-streak triggers a combo callout. High score, best streak, and your last 5 runs are saved locally so you can chase your own record.
 
