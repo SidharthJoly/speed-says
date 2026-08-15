@@ -2,7 +2,7 @@
 
 A browser-based reflex game where every round could be a trap. Type fast, mash faster, react on cue, and don't fall for the bait — all while the clock ramps from 5 seconds down to 1.5.
 
-**[▶ Play it live](https://sidharthjoly.github.io/speed-says/)** — installable as a PWA, and works offline once loaded.
+**[▶ Play it live](https://sidharthjoly.github.io/SpeedSays/)** — installable as a PWA, and works offline once loaded.
 
 ![Speed Says gameplay](docs/gameplay.gif)
 
@@ -43,8 +43,8 @@ Zero dependencies, zero build step — plain HTML, CSS, and JavaScript, playable
 No build step required — just serve the folder:
 
 ```bash
-git clone https://github.com/SidharthJoly/speed-says.git
-cd speed-says
+git clone https://github.com/SidharthJoly/SpeedSays.git
+cd SpeedSays
 python3 -m http.server 8765
 ```
 
