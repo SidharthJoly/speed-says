@@ -40,6 +40,7 @@ if ('serviceWorker' in navigator) {
     overRoundsCleared: document.getElementById('over-rounds-cleared'),
     btnShare: document.getElementById('btn-share'),
     shareStatus: document.getElementById('share-status'),
+    keyboardDock: document.getElementById('keyboard-dock'),
   };
 
   const TYPE_PHRASES = [
@@ -166,6 +167,18 @@ if ('serviceWorker' in navigator) {
   // 'pointerdown' — so it's also handled here, gated on event.detail === 0
   // (the standard tell for a keyboard-triggered click) to avoid double-firing
   // for mouse/touch users who already triggered the pointerdown handler.
+  function showKeyboardDock(keyboardEl) {
+    el.keyboardDock.innerHTML = '';
+    el.keyboardDock.appendChild(keyboardEl);
+    document.body.style.paddingBottom = `${el.keyboardDock.offsetHeight}px`;
+    el.keyboardDock.classList.add('visible');
+  }
+
+  function hideKeyboardDock() {
+    el.keyboardDock.classList.remove('visible');
+    document.body.style.paddingBottom = '';
+  }
+
   function onTap(element, handler) {
     const onPointerDown = (e) => {
       e.preventDefault();
@@ -572,11 +585,12 @@ if ('serviceWorker' in navigator) {
 
     el.challengeArea.appendChild(phraseEl);
     el.challengeArea.appendChild(typedEl);
-    el.challengeArea.appendChild(keyboard);
+    showKeyboardDock(keyboard);
 
     state.cleanup = () => {
       offTaps.forEach((fn) => fn());
       window.removeEventListener('keydown', onKeydown);
+      hideKeyboardDock();
     };
   }
 
