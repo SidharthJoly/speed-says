@@ -210,8 +210,8 @@ if ('serviceWorker' in navigator) {
     const type = pickRoundType();
     showRoundIntro(type, () => {
       state.resolved = false;
-      renderChallenge(type);
-      startTimer(getRoundTime(state.round));
+      const duration = getRoundTime(state.round);
+      renderChallenge(type, () => startTimer(duration));
     });
   }
 
@@ -367,19 +367,23 @@ if ('serviceWorker' in navigator) {
     showScreen(el.screenOver);
   }
 
-  function renderChallenge(type) {
+  function renderChallenge(type, start) {
     el.challengeArea.innerHTML = '';
     el.feedback.textContent = '';
     el.feedback.className = 'feedback';
 
-    if (type === 'type') renderTypeFast();
-    else if (type === 'rageclick') renderRageClick();
-    else if (type === 'reaction') renderReaction();
-    else if (type === 'bait') renderBait();
-    else if (type === 'speedsays') renderSpeedSays();
+    if (type === 'type') {
+      renderTypeFast(start);
+    } else {
+      if (type === 'rageclick') renderRageClick();
+      else if (type === 'reaction') renderReaction();
+      else if (type === 'bait') renderBait();
+      else if (type === 'speedsays') renderSpeedSays();
+      start();
+    }
   }
 
-  function renderTypeFast() {
+  function renderTypeFast(start) {
     const phrase = pick(TYPE_PHRASES);
 
     const phraseEl = document.createElement('div');
@@ -387,24 +391,44 @@ if ('serviceWorker' in navigator) {
     phraseEl.textContent = phrase;
 
     const input = document.createElement('input');
-    input.className = 'type-input';
+    input.className = 'type-input waiting';
     input.type = 'text';
     input.autocomplete = 'off';
+    input.autocapitalize = 'characters';
+    input.enterKeyHint = 'done';
     input.spellcheck = false;
+    input.placeholder = 'TAP TO TYPE';
+
+    // Mobile browsers ignore focus() unless it comes from a user gesture, so the
+    // round timer must not start until the player actually taps in and the
+    // keyboard opens — otherwise short rounds are unwinnable on a phone.
+    let started = false;
+    function begin() {
+      if (started) return;
+      started = true;
+      input.classList.remove('waiting');
+      input.placeholder = '';
+      start();
+    }
 
     function onInput() {
+      begin();
       const val = input.value.trim().toUpperCase();
       if (val === phrase) {
         resolveRound(true);
       }
     }
     input.addEventListener('input', onInput);
+    input.addEventListener('focus', begin);
 
     el.challengeArea.appendChild(phraseEl);
     el.challengeArea.appendChild(input);
     setTimeout(() => input.focus(), 30);
 
-    state.cleanup = () => input.removeEventListener('input', onInput);
+    state.cleanup = () => {
+      input.removeEventListener('input', onInput);
+      input.removeEventListener('focus', begin);
+    };
   }
 
   function renderRageClick() {

@@ -192,6 +192,20 @@ body {
 
 .type-input.wrong { border-color: var(--red); animation: shake 0.2s; }
 
+.type-input::placeholder {
+  color: var(--grey);
+  letter-spacing: 1px;
+}
+
+.type-input.waiting {
+  animation: input-pulse 1s ease-in-out infinite;
+}
+
+@keyframes input-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,45,45,0); border-color: var(--red); }
+  50% { box-shadow: 0 0 16px rgba(255,45,45,0.6); border-color: var(--yellow); }
+}
+
 /* rage click */
 .rage-btn {
   font-family: 'Bungee', sans-serif;
