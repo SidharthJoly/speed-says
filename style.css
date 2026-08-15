@@ -11,9 +11,19 @@
 
 * { box-sizing: border-box; }
 
+/* Mobile Safari's address bar showing/hiding can leave 100vh short of the
+   actual visible area, and the gap shows the browser's default white
+   instead of the page background. Painting the root element too (not just
+   body) and preferring the dynamic viewport unit where supported closes
+   that gap regardless of toolbar state. */
+html {
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background: radial-gradient(circle at 50% 0%, #1a0d0d 0%, var(--bg) 60%);
   color: var(--white);
   font-family: 'Archivo Black', sans-serif;
