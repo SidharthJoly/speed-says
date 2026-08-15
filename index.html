@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPEED SAYS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo+Black&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- START SCREEN -->
+  <section id="screen-start" class="screen active">
+    <h1 class="logo">⚡ SPEED SAYS ⚡</h1>
+    <p class="tagline">type fast. click faster. don't get baited.</p>
+    <div class="highscore">HIGH SCORE: <span id="highscore-value">0</span></div>
+    <button id="btn-start" class="btn btn-primary">LOCK IN</button>
+    <div class="rules">
+      <p>🔤 <b>TYPE IT</b> — type the phrase before time's up</p>
+      <p>🖱️ <b>RAGE CLICK</b> — mash the button N times</p>
+      <p>⚡ <b>REACTION</b> — wait for green, then click. click early = fail</p>
+      <p>🎣 <b>BAIT & SWITCH</b> — click the real word, not the decoys</p>
+      <p class="rules-timer">rounds start at 5s and ramp down to 1.5s. 3 lives. good luck.</p>
+    </div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="hud">
+      <div class="hud-item">ROUND <span id="hud-round">1</span></div>
+      <div class="hud-item">SCORE <span id="hud-score">0</span></div>
+      <div class="hud-item lives" id="hud-lives">❤️❤️❤️</div>
+    </div>
+
+    <div class="timer-track">
+      <div id="timer-bar" class="timer-bar"></div>
+    </div>
+
+    <div id="challenge-label" class="challenge-label"></div>
+
+    <div id="challenge-area" class="challenge-area">
+      <!-- injected per round -->
+    </div>
+
+    <div id="feedback" class="feedback"></div>
+  </section>
+
+  <!-- GAME OVER SCREEN -->
+  <section id="screen-over" class="screen">
+    <h1 class="logo small">GAME OVER</h1>
+    <p id="over-reason" class="over-reason"></p>
+    <div class="final-score">SCORE: <span id="final-score">0</span></div>
+    <div id="new-high" class="new-high hidden">🔥 NEW HIGH SCORE 🔥</div>
+    <button id="btn-restart" class="btn btn-primary">RUN IT BACK</button>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
